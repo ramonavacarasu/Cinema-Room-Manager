@@ -30,10 +30,12 @@ public class CinemaTests extends StageTest<String> {
 
         if (!output.contains("show the seats") ||
             !output.contains("buy a ticket") ||
-            !output.contains("exit")) {
-            return CheckResult.wrong("Your menu should contain 3 items:\n" +
+            !output.contains("exit") ||
+            !output.contains("statistics")) {
+            return CheckResult.wrong("Your menu should contain 4 items:\n" +
                 "1. Show the seats\n" +
                 "2. Buy a ticket\n" +
+                "3. Statistics\n" +
                 "0. Exit");
         }
 
@@ -61,7 +63,8 @@ public class CinemaTests extends StageTest<String> {
 
         if (!output.contains("show the seats") ||
             !output.contains("buy a ticket") ||
-            !output.contains("exit")) {
+            !output.contains("exit") ||
+            !output.contains("statistics")) {
             return CheckResult.wrong("After showing the seats arrangement you should print the menu again!");
         }
 
@@ -121,7 +124,8 @@ public class CinemaTests extends StageTest<String> {
 
         if (!output.contains("show the seats") ||
             !output.contains("buy a ticket") ||
-            !output.contains("exit")) {
+            !output.contains("exit") ||
+            !output.contains("statistics")) {
             return CheckResult.wrong("After buying a ticket you should print the menu again!");
         }
 
@@ -180,6 +184,211 @@ public class CinemaTests extends StageTest<String> {
         checkTakenSeat(output, 9, 9, 6, 6);
 
         return CheckResult.correct();
+    }
+
+    @DynamicTestingMethod
+    CheckResult test5_checkErrorHandling() {
+
+        TestedProgram program;
+        String output;
+
+        program = new TestedProgram(Cinema.class);
+        program.start();
+
+        program.execute("9\n9");
+        program.execute("2\n1\n1");
+
+        output = program.execute("2\n1\n1");
+
+        if (!output.toLowerCase().contains("that ticket has already been purchased")) {
+            return CheckResult.wrong("If the user tries to buy a ticket that already has been purchased you should print: " +
+                "'That ticket has already been purchased'");
+        }
+
+        if (!output.toLowerCase().contains("enter a row number")) {
+            return CheckResult.wrong("If the user tries to buy a ticket that already has been purchased you should " +
+                "ask to enter a seat coordinates again.");
+        }
+
+        output = program.execute("9");
+
+        if (!output.toLowerCase().contains("enter a seat number in that row:")) {
+            return CheckResult.wrong("After entering a row number you should ask for entering a seat number in that row.\n" +
+                "Your output should contain 'Enter a seat number in that row:'.");
+        }
+
+        program.execute("5");
+
+        output = program.execute("2\n9\n5");
+
+        if (!output.toLowerCase().contains("that ticket has already been purchased")) {
+            return CheckResult.wrong("If the user tries to buy a ticket that already has been purchased you should print:\n" +
+                "'That ticket has already been purchased' and ask to enter a seat coordinates again.");
+        }
+
+        program.execute("2\n3");
+
+        output = program.execute("2\n10\n1");
+
+        if (!output.toLowerCase().contains("wrong input")) {
+            return CheckResult.wrong("If the user input coordinates is out of bounds you should print 'Wrong input'");
+        }
+
+        if (!output.toLowerCase().contains("enter a row number")) {
+            return CheckResult.wrong("If the user input coordinates is out of bounds you should " +
+                "ask to enter a seat coordinates again.");
+        }
+
+        program.execute("5\n10");
+
+        if (!output.toLowerCase().contains("wrong input")) {
+            return CheckResult.wrong("If the user input coordinates is out of bounds you should print 'Wrong input'");
+        }
+
+        program.execute("-5\n12");
+
+        if (!output.toLowerCase().contains("wrong input")) {
+            return CheckResult.wrong("If the user input coordinates is out of bounds you should print 'Wrong input'");
+        }
+
+        program.execute("5\n5");
+
+        return CheckResult.correct();
+    }
+
+    @DynamicTestingMethod
+    CheckResult test6_checkStatistics() {
+
+        TestedProgram program;
+        String output;
+
+        program = new TestedProgram(Cinema.class);
+        program.start();
+        program.execute("9\n9");
+
+        output = program.execute("3").toLowerCase();
+
+        if (!output.contains("number of purchased tickets")) {
+            return CheckResult.wrong("After choosing 'Statistics' item can't find information about the number of purchased tickets.\n" +
+                "Your output should contain 'Number of purchased tickets'");
+        }
+
+        if (!output.contains("percentage")) {
+            return CheckResult.wrong("After choosing 'Statistics' item can't find information about the percentage.\n" +
+                "Your output should contain 'Percentage'");
+        }
+
+        if (!output.contains("current income")) {
+            return CheckResult.wrong("After choosing 'Statistics' item can't find information about the current income.\n" +
+                "Your output should contain 'Current income'");
+        }
+
+        if (!output.contains("total income")) {
+            return CheckResult.wrong("After choosing 'Statistics' item can't find information about the total income.\n" +
+                "Your output should contain 'Total income'");
+        }
+
+        checkNumberOfPurchasedTickets(output, "0");
+        checkPercentage(output, "0.00%");
+        checkCurrentIncome(output, "$0");
+        checkTotalIncome(output, "$720");
+
+
+        program.execute("2\n1\n1");
+        program.execute("2\n1\n5");
+        program.execute("2\n1\n7");
+        output = program.execute("3");
+
+        checkNumberOfPurchasedTickets(output, "3");
+        checkPercentage(output, "3.70%");
+        checkCurrentIncome(output, "$30");
+        checkTotalIncome(output, "$720");
+
+        program.execute("2\n9\n1");
+        program.execute("2\n9\n5");
+        program.execute("2\n9\n7");
+        output = program.execute("3");
+
+        checkNumberOfPurchasedTickets(output, "6");
+        checkPercentage(output, "7.41%");
+        checkCurrentIncome(output, "$54");
+        checkTotalIncome(output, "$720");
+
+        for (int i = 1; i < 9; i++) {
+            for (int j = 0; j < 8; j++) {
+                program.execute("2\n" + (i + 1) + "\n" + (j + 1));
+            }
+        }
+
+        output = program.execute("3");
+
+        checkNumberOfPurchasedTickets(output, "81");
+        checkPercentage(output, "100.00%");
+        checkCurrentIncome(output, "$720");
+        checkTotalIncome(output, "$720");
+
+        return CheckResult.correct();
+    }
+
+
+    private void checkNumberOfPurchasedTickets(String output, String correctNumber) {
+        String[] splittedOutput = output.trim().split("\n");
+
+        for (String line : splittedOutput) {
+            if (line.toLowerCase().contains("number of purchased tickets")) {
+                line = line.toLowerCase().replace("number of purchased tickets", "").replace(":", "").trim();
+                if (!line.equals(correctNumber)) {
+                    throw new WrongAnswer("Wrong number of purchased tickets!\n" +
+                        "Found: " + line + "\n" +
+                        "Expected: " + correctNumber);
+                }
+            }
+        }
+    }
+
+    private void checkPercentage(String output, String correctNumber) {
+        String[] splittedOutput = output.trim().split("\n");
+
+        for (String line : splittedOutput) {
+            if (line.contains("percentage")) {
+                line = line.toLowerCase().replace("percentage", "").replace(":", "").trim();
+                if (!line.equals(correctNumber)) {
+                    throw new WrongAnswer("Wrong percentage!\n" +
+                        "Found: " + line + "\n" +
+                        "Expected: " + correctNumber);
+                }
+            }
+        }
+    }
+
+    private void checkCurrentIncome(String output, String correctNumber) {
+        String[] splittedOutput = output.trim().split("\n");
+
+        for (String line : splittedOutput) {
+            if (line.contains("current income")) {
+                line = line.toLowerCase().replace("current income", "").replace(":", "").trim();
+                if (!line.equals(correctNumber)) {
+                    throw new WrongAnswer("Wrong current income!\n" +
+                        "Found: " + line + "\n" +
+                        "Expected: " + correctNumber);
+                }
+            }
+        }
+    }
+
+    private void checkTotalIncome(String output, String correctNumber) {
+        String[] splittedOutput = output.trim().split("\n");
+
+        for (String line : splittedOutput) {
+            if (line.contains("total income")) {
+                line = line.toLowerCase().replace("total income", "").replace(":", "").trim();
+                if (!line.equals(correctNumber)) {
+                    throw new WrongAnswer("Wrong total income!\n" +
+                        "Found: " + line + "\n" +
+                        "Expected: " + correctNumber);
+                }
+            }
+        }
     }
 
 

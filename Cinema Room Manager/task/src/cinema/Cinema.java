@@ -25,11 +25,22 @@ class CinemaRoom {
     private int numberOfSeats;
     private Scanner scanner = new Scanner(System.in);
 
+    private int tickets = 0;
+    private int income = 0;
+    private int totalIncome = 0;
+    private int frontRows;
+    private int backRows;
+
     public CinemaRoom(int numberOfRows, int seatsInEachRow) {
         this.numberOfRows = numberOfRows;
         this.seatsInEachRow = seatsInEachRow;
-        seats = new char[numberOfRows + 1][seatsInEachRow + 1];
+
         setNumberOfSeats(numberOfRows * seatsInEachRow);
+        setFrontRows(numberOfRows / 2);
+        setBackRows(numberOfRows - frontRows);
+        setTotalIncome();
+
+        seats = new char[numberOfRows + 1][seatsInEachRow + 1];
         generateSeats();
 
     }
@@ -41,6 +52,7 @@ class CinemaRoom {
         while (!exit) {
             System.out.println("1. Show the seats\n" +
                     "2. Buy a ticket\n" +
+                    "3. Statistics\n" +
                     "0. Exit");
             String option = scanner.next();
 
@@ -51,12 +63,25 @@ class CinemaRoom {
                 case "2":
                     reserveSeat();
                     break;
+                case "3":
+                    statistics();
+                    break;
                 case "0":
                     exit = true;
             }
         }
 
     }
+
+    void statistics() {
+        System.out.printf("\nNumber of purchased tickets: %d", tickets);
+        double percentage = (double) tickets * 100 / numberOfSeats;
+        System.out.printf("\nPercentage: %.2f", percentage);
+        System.out.print("%");
+        System.out.printf("\nCurrent income: $%d", income);
+        System.out.printf("\nTotal income: $%d\n", totalIncome);
+    }
+
     void drawTheCinema() {
         System.out.println("Cinema:");
 
@@ -73,7 +98,7 @@ class CinemaRoom {
         }
     }
 
-    public void generateSeats() {
+    void generateSeats() {
         for (int i = 0; i < numberOfRows; i++) {
             for (int j = 0; j < seatsInEachRow; j++) {
                 seats[i][j] = 's';
@@ -81,38 +106,62 @@ class CinemaRoom {
         }
     }
 
-    public void setNumberOfSeats(int numberOfSeats) {
+    void setNumberOfSeats(int numberOfSeats) {
         this.numberOfSeats = numberOfSeats;
     }
 
-    public void reserveSeat() {
+    public void setFrontRows(int frontRows) {
+        this.frontRows = frontRows;
+    }
+
+    public void setBackRows(int backRows) {
+        this.backRows = backRows;
+    }
+
+    void reserveSeat() {
 
         System.out.println("Enter a row number:");
         int aRow = scanner.nextInt();
         System.out.println("Enter a seat number in that row:");
         int aSeat = scanner.nextInt();
 
-        seats[aRow - 1][aSeat - 1] = 'B';
-        printTicketPrice(aRow);
-        drawTheCinema();
+        if (aRow > 0 && aRow <= numberOfRows && aSeat > 0 && aSeat <= seatsInEachRow) {
+            if (seats[aRow - 1][aSeat - 1] != 'B') {
+                seats[aRow - 1][aSeat - 1] = 'B';
+                printTicketPrice(aRow);
+                tickets++;
+            } else {
+                System.out.println("That ticket has already been purchased!");
+                reserveSeat();
+            }
+        } else {
+            System.out.println("Wrong input!");
+            reserveSeat();
+        }
     }
 
     void printTicketPrice(int aRow) {
-
-        this.numberOfSeats = numberOfRows * seatsInEachRow;
-
         int ticketPrice;
 
         if (numberOfSeats <= 60) {
             ticketPrice = 10;
         } else {
-            if (numberOfRows / 2 < aRow) {
+            if (frontRows < aRow) {
                 ticketPrice = 8;
             } else {
                 ticketPrice = 10;
             }
         }
-
+        income += ticketPrice;
         System.out.printf("\nTicket price: $%d\n\n", ticketPrice);
+    }
+
+    void setTotalIncome() {
+        if (numberOfSeats <= 60) {
+            totalIncome = numberOfSeats * 10;
+        } else {
+            totalIncome = frontRows * seatsInEachRow * 10
+                    + backRows * seatsInEachRow * 8;
+        }
     }
 }
