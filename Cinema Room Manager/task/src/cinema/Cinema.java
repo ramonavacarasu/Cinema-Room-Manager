@@ -13,14 +13,7 @@ public class Cinema {
         int seatsInEachRow = scanner.nextInt();
 
         CinemaRoom cinemaRoom = new CinemaRoom(numberOfRows, seatsInEachRow);
-        cinemaRoom.drawTheCinema();
-
-        System.out.println("Enter a row number:");
-        int aRow = scanner.nextInt();
-        System.out.println("Enter a seat number in that row:");
-        int aSeat = scanner.nextInt();
-
-        cinemaRoom.reserveSeat(aRow, aSeat);
+        cinemaRoom.openCinema();
     }
 }
 
@@ -30,6 +23,7 @@ class CinemaRoom {
     private int seatsInEachRow;
     private char[][] seats;
     private int numberOfSeats;
+    private Scanner scanner = new Scanner(System.in);
 
     public CinemaRoom(int numberOfRows, int seatsInEachRow) {
         this.numberOfRows = numberOfRows;
@@ -40,6 +34,29 @@ class CinemaRoom {
 
     }
 
+    void openCinema() {
+
+        boolean exit = false;
+
+        while (!exit) {
+            System.out.println("1. Show the seats\n" +
+                    "2. Buy a ticket\n" +
+                    "0. Exit");
+            String option = scanner.next();
+
+            switch (option) {
+                case "1":
+                    drawTheCinema();
+                    break;
+                case "2":
+                    reserveSeat();
+                    break;
+                case "0":
+                    exit = true;
+            }
+        }
+
+    }
     void drawTheCinema() {
         System.out.println("Cinema:");
 
@@ -68,7 +85,13 @@ class CinemaRoom {
         this.numberOfSeats = numberOfSeats;
     }
 
-    public void reserveSeat(int aRow, int aSeat) {
+    public void reserveSeat() {
+
+        System.out.println("Enter a row number:");
+        int aRow = scanner.nextInt();
+        System.out.println("Enter a seat number in that row:");
+        int aSeat = scanner.nextInt();
+
         seats[aRow - 1][aSeat - 1] = 'B';
         printTicketPrice(aRow);
         drawTheCinema();
